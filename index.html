@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#080e19">
+
+  <title>مسابقه بی‌پایان سامیار</title>
+
+  <style>
+    :root {
+      --background: #080e19;
+      --panel: rgba(10, 19, 35, 0.91);
+      --white: #f5f8ff;
+      --muted: #a9bbd0;
+      --cyan: #4de2ee;
+      --yellow: #ffd65c;
+      --red: #ff6078;
+      --green: #73efac;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--background);
+    }
+
+    body {
+      font-family:
+        Tahoma,
+        Arial,
+        sans-serif;
+
+      color: var(--white);
+
+      touch-action: none;
+
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button[hidden],
+    div[hidden],
+    section[hidden] {
+      display: none !important;
+    }
+
+    #game {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    #vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+
+      background:
+        radial-gradient(
+          circle at 50% 48%,
+          transparent 35%,
+          rgba(2, 5, 13, 0.29) 100%
+        );
+    }
+
+    #flash {
+      position: fixed;
+      inset: 0;
+
+      z-index: 12;
+
+      background: white;
+      opacity: 0;
+
+      pointer-events: none;
+
+      transition: opacity 150ms ease-out;
+    }
+
+    #flash.active {
+      opacity: 0.52;
+      transition: none;
+    }
+
+    #hud {
+      position: fixed;
+      z-index: 5;
+
+      top: max(12px, env(safe-area-inset-top));
+      left: 10px;
+      right: 10px;
+
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      pointer-events: none;
+    }
+
+    .hud-top {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .hud-item {
+      min-height: 58px;
+
+      padding: 8px 5px;
+
+      border: 1px solid rgba(161, 210, 240, 0.19);
+      border-radius: 13px;
+
+      background: rgba(7, 16, 30, 0.72);
+
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.17);
+
+      text-align: center;
+      backdrop-filter: blur(7px);
+    }
+
+    .hud-label {
+      display: block;
+
+      color: var(--muted);
+      font-size: 10px;
+
+      margin-bottom: 3px;
+    }
+
+    .hud-value {
+      display: block;
+
+      color: var(--white);
+      font-size: 17px;
+      font-weight: 900;
+
+      direction: ltr;
+    }
+
+    .hud-bottom {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #nitro-box {
+      flex: 1;
+
+      padding: 7px 9px;
+
+      border: 1px solid rgba(161, 210, 240, 0.19);
+      border-radius: 12px;
+
+      background: rgba(7, 16, 30, 0.74);
+    }
+
+    .nitro-title {
+      display: flex;
+      justify-content: space-between;
+
+      margin-bottom: 5px;
+
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    #nitro-track {
+      width: 100%;
+      height: 8px;
+
+      overflow: hidden;
+
+      border-radius: 20px;
+      background: #263145;
+    }
+
+    #nitro-fill {
+      width: 100%;
+      height: 100%;
+
+      border-radius: inherit;
+
+      background:
+        linear-gradient(
+          90deg,
+          #2f94ff,
+          #4de2ee,
+          #c5fff8
+        );
+
+      box-shadow: 0 0 10px rgba(77, 226, 238, 0.8);
+    }
+
+    #pause-button {
+      width: 39px;
+      height: 39px;
+
+      flex: 0 0 39px;
+
+      border: 1px solid rgba(161, 210, 240, 0.25);
+      border-radius: 12px;
+
+      color: white;
+      background: rgba(7, 16, 30, 0.78);
+
+      font-size: 17px;
+
+      pointer-events: auto;
+    }
+
+    #toast {
+      position: fixed;
+      z-index: 8;
+
+      top: 132px;
+      left: 50%;
+
+      min-width: 145px;
+      max-width: calc(100% - 30px);
+
+      padding: 10px 15px;
+
+      transform: translate(-50%, -12px);
+
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 15px;
+
+      color: white;
+      background: rgba(9, 21, 39, 0.85);
+
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+
+      opacity: 0;
+
+      pointer-events: none;
+
+      transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    #controls {
+      position: fixed;
+      z-index: 6;
+
+      right: 0;
+      bottom: max(13px, env(safe-area-inset-bottom));
+      left: 0;
+
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+
+      padding: 0 16px;
+
+      pointer-events: none;
+    }
+
+    .steering {
+      display: flex;
+      gap: 12px;
+    }
+
+    .control-button {
+      width: 69px;
+      height: 69px;
+
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 20px;
+
+      color: white;
+      background: rgba(9, 24, 43, 0.75);
+
+      box-shadow:
+        inset 0 1px rgba(255, 255, 255, 0.14),
+        0 9px 19px rgba(0, 0, 0, 0.25);
+
+      font-size: 29px;
+      font-weight: 900;
+
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    .control-button:active,
+    .control-button.pressed {
+      transform: scale(0.94);
+      background: rgba(44, 113, 156, 0.85);
+    }
+
+    #boost-button {
+      width: 79px;
+      height: 79px;
+
+      border-color: rgba(77, 226, 238, 0.54);
+      border-radius: 50%;
+
+      color: #d9ffff;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(27, 109, 151, 0.94),
+          rgba(8, 30, 63, 0.96)
+        );
+
+      font-size: 12px;
+      letter-spacing: 0.5px;
+
+      box-shadow:
+        0 0 20px rgba(77, 226, 238, 0.16),
+        0 10px 22px rgba(0, 0, 0, 0.27);
+    }
+
+    #overlay {
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      padding: 20px;
+
+      background: rgba(3, 8, 18, 0.64);
+
+      backdrop-filter: blur(7px);
+    }
+
+    #panel {
+      width: min(100%, 410px);
+
+      padding: 28px 22px 23px;
+
+      border: 1px solid rgba(151, 217, 244, 0.3);
+      border-radius: 26px;
+
+      background:
+        linear-gradient(
+          150deg,
+          rgba(23, 48, 75, 0.97),
+          rgba(7, 15, 29, 0.98)
+        );
+
+      box-shadow:
+        0 20px 70px rgba(0, 0, 0, 0.42),
+        inset 0 1px rgba(255, 255, 255, 0.1);
+
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+
+      padding: 7px 12px;
+
+      border: 1px solid rgba(77, 226, 238, 0.35);
+      border-radius: 30px;
+
+      color: var(--cyan);
+      background: rgba(77, 226, 238, 0.08);
+
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    #panel-title {
+      margin: 16px 0 9px;
+
+      color: white;
+
+      font-size: clamp(26px, 8vw, 35px);
+      line-height: 1.35;
+    }
+
+    #panel-description {
+      margin: 0 auto 19px;
+
+      max-width: 320px;
+
+      color: #c6d6e6;
+
+      font-size: 13px;
+      line-height: 2;
+    }
+
+    #panel-stats {
+      margin: 12px 0 17px;
+
+      padding: 12px;
+
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 14px;
+
+      color: var(--yellow);
+      background: rgba(0, 0, 0, 0.17);
+
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.8;
+    }
+
+    .main-button,
+    .secondary-button {
+      display: block;
+
+      width: 100%;
+      min-height: 49px;
+
+      margin-top: 9px;
+
+      border: 0;
+      border-radius: 14px;
+
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .main-button {
+      color: #072434;
+
+      background:
+        linear-gradient(
+          90deg,
+          #49dce9,
+          #a5f5e3
+        );
+
+      box-shadow: 0 9px 22px rgba(77, 226, 238, 0.2);
+    }
+
+    .secondary-button {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+
+      color: #e8f0fc;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .help {
+      margin: 17px 0 0;
+
+      color: #a9bad1;
+
+      font-size: 11px;
+      line-height: 1.9;
+    }
+
+    @media (max-height: 690px) {
+      #hud {
+        gap: 5px;
+      }
+
+      .hud-item {
+        min-height: 49px;
+        padding: 5px 3px;
+      }
+
+      .hud-value {
+        font-size: 14px;
+      }
+
+      .control-button {
+        width: 59px;
+        height: 59px;
+      }
+
+      #boost-button {
+        width: 66px;
+        height: 66px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="game"></canvas>
+
+  <div id="vignette"></div>
+  <div id="flash"></div>
+
+  <div id="hud" hidden>
+    <div class="hud-top">
+
+      <div class="hud-item">
+        <span class="hud-label">امتیاز</span>
+        <span class="hud-value" id="score-value">0</span>
+      </div>
+
+      <div class="hud-item">
+        <span class="hud-label">سرعت</span>
+        <span class="hud-value" id="speed-value">0</span>
+      </div>
+
+      <div class="hud-item">
+        <span class="hud-label">سکه / سپر</span>
+        <span class="hud-value" id="items-value">0 / 0</span>
+      </div>
+
+    </div>
+
+    <div class="hud-bottom">
+
+      <div id="nitro-box">
+        <div class="nitro-title">
+          <span>⚡ نیترو</span>
+          <span id="nitro-text">100%</span>
+        </div>
+
+        <div id="nitro-track">
+          <div id="nitro-fill"></div>
+        </div>
+      </div>
+
+      <button
+        id="pause-button"
+        type="button"
+        aria-label="توقف بازی"
+      >Ⅱ</button>
+
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="controls" hidden>
+
+    <div class="steering">
+
+      <button
+        id="right-button"
+        class="control-button"
+        type="button"
+        aria-label="حرکت به راست"
+      >▶</button>
+
+      <button
+        id="left-button"
+        class="control-button"
+        type="button"
+        aria-label="حرکت به چپ"
+      >◀</button>
+
+    </div>
+
+    <button
+      id="boost-button"
+      class="control-button"
+      type="button"
+      aria-label="فعال کردن نیترو"
+    >نیترو ⚡</button>
+
+  </div>
+
+  <section id="overlay">
+
+    <div id="panel">
+
+      <span class="badge">SAMYAR RACING</span>
+
+      <h1 id="panel-title">مسابقه بی‌پایان</h1>
+
+      <p id="panel-description">
+        از ماشین‌ها جاخالی بده، سکه بگیر و رکورد بزن!
+      </p>
+
+      <div id="panel-stats"></div>
+
+      <button
+        id="primary-button"
+        class="main-button"
+        type="button"
+      >شروع بازی</button>
+
+      <button
+        id="secondary-button"
+        class="secondary-button"
+        type="button"
+        hidden
+      >شروع دوباره</button>
+
+      <button
+        id="sound-button"
+        class="secondary-button"
+        type="button"
+      >صدا: روشن 🔊</button>
+
+      <p class="help">
+        گوشی: دکمه‌ها یا کشیدن انگشت روی جاده<br>
+        کامپیوتر: کلیدهای ← → ، فاصله برای نیترو، P برای توقف
+      </p>
+
+    </div>
+
+  </section>
+
+  <script>
+    "use strict";
+
+    // ------------------------------------------------------------
+    // عناصر صفحه
+    // ------------------------------------------------------------
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const hud = document.getElementById("hud");
+    const controls = document.getElementById("controls");
+    const overlay = document.getElementById("overlay");
+
+    const scoreValue = document.getElementById("score-value");
+    const speedValue = document.getElementById("speed-value");
+    const itemsValue = document.getElementById("items-value");
+
+    const nitroText = document.getElementById("nitro-text");
+    const nitroFill = document.getElementById("nitro-fill");
+
+    const pauseButton = document.getElementById("pause-button");
+    const leftButton = document.getElementById("left-button");
+    const rightButton = document.getElementById("right-button");
+    const boostButton = document.getElementById("boost-button");
+
+    const panelTitle = document.getElementById("panel-title");
+    const panelDescription =
+      document.getElementById("panel-description");
+
+    const panelStats = document.getElementById("panel-stats");
+    const primaryButton =
+      document.getElementById("primary-button");
+
+    const secondaryButton =
+      document.getElementById("secondary-button");
+
+    const soundButton =
+      document.getElementById("sound-button");
+
+    const toastElement = document.getElementById("toast");
+    const flashElement = document.getElementById("flash");
+
+    // ------------------------------------------------------------
+    // تنظیمات پایه
+    // ------------------------------------------------------------
+
+    const STORAGE_KEY = "samyar_racing_best_v1";
+
+    const CAR_COLORS = [
+      "#ff637b",
+      "#f7c94a",
+      "#52d8a5",
+      "#88a9ff",
+      "#e4e9f2",
+      "#b98cff"
+    ];
+
+    const scenerySeeds = Array.from(
+      { length: 38 },
+      (_, index) => ({
+        side: index % 2 === 0 ? -1 : 1,
+        type: index % 7,
+        shift: 22 + ((index * 47) % 88),
+        position: index * 91
+      })
+    );
+
+    let W = 420;
+    let H = 800;
+    let scale = 1;
+    let pixelRatio = 1;
+
+    let lastFrame = 0;
+    let screenTime = 0;
+
+    let toastTimer = 0;
+    let audioContext = null;
+    let soundEnabled = true;
+
+    let gestureStartX = null;
+    let gestureLastX = null;
+
+    const keys = {
+      boost: false
+    };
+
+    const game = {
+      state: "menu",
+
+      time: 0,
+      distance: 0,
+      score: 0,
+      best: loadBest(),
+
+      scoreTicks: 0,
+      coins: 0,
+
+      speed: 112,
+
+      boost: 100,
+      boosting: false,
+
+      shields: 1,
+      invincible: 0,
+
+      traffic: [],
+      pickups: [],
+      particles: [],
+
+      spawnTimer: 0.6,
+      pickupTimer: 2.3,
+
+      weather: "clear",
+
+      player: {
+        lane: 1,
+        x: 210,
+        y: 610,
+        width: 46,
+        height: 79
+      }
+    };
+
+    // ------------------------------------------------------------
+    // ذخیره رکورد
+    // ------------------------------------------------------------
+
+    function loadBest() {
+      try {
+        const value = Number(
+          localStorage.getItem(STORAGE_KEY)
+        );
+
+        return Number.isFinite(value)
+          ? Math.max(0, value)
+          : 0;
+      } catch {
+        return 0;
+      }
+    }
+
+    function saveBest(value) {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          String(value)
+        );
+      } catch {
+        // اگر مرورگر اجازه ذخیره نداد، بازی همچنان اجرا می‌شود.
+      }
+    }
+
+    // ------------------------------------------------------------
+    // اندازه صفحه
+    // ------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      pixelRatio = Math.min(
+        window.devicePixelRatio || 1,
+        2
+      );
+
+      scale = Math.max(
+        0.65,
+        Math.min(
+          width / 420,
+          height / 720,
+          1.55
+        )
+      );
+
+      W = width / scale;
+      H = height / scale;
+
+      canvas.width = Math.round(
+        width * pixelRatio
+      );
+
+      canvas.height = Math.round(
+        height * pixelRatio
+      );
+
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+
+      game.player.y = playerY();
+
+      if (game.state !== "run") {
+        game.player.x = laneCenter(
+          game.player.lane,
+          game.player.y
+        );
+      }
+    }
+
+    function playerY() {
+      return H - Math.max(
+        150,
+        H * 0.175
+      );
+    }
+
+    // ------------------------------------------------------------
+    // هندسه جاده
+    // ------------------------------------------------------------
+
+    function roadCenter(y, distance = game.distance) {
+      const depth = 1 - y / H;
+
+      return W / 2 +
+        Math.sin(
+          distance / 240 +
+          depth * 2.15
+        ) *
+        22 *
+        depth;
+    }
+
+    function roadHalfWidth(y) {
+      const bottomWidth = Math.min(
+        185,
+        Math.max(136, W * 0.39)
+      );
+
+      const progress = Math.max(
+        0,
+        Math.min(1, y / H)
+      );
+
+      return bottomWidth *
+        (0.82 + progress * 0.18);
+    }
+
+    function laneCenter(
+      lane,
+      y,
+      distance = game.distance
+    ) {
+      const laneWidth =
+        (roadHalfWidth(y) * 2) / 3;
+
+      return roadCenter(
+        y,
+        distance
+      ) +
+      (lane - 1) * laneWidth;
+    }
+
+    function perspective(y) {
+      return 0.75 +
+        Math.max(
+          0,
+          Math.min(1, y / H)
+        ) * 0.25;
+    }
+
+    // ------------------------------------------------------------
+    // ابزار رسم
+    // ------------------------------------------------------------
+
+    function roundedRect(
+      x,
+      y,
+      width,
+      height,
+      radius
+    ) {
+      radius = Math.min(
+        radius,
+        width / 2,
+        height / 2
+      );
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        x + radius,
+        y
+      );
+
+      ctx.lineTo(
+        x + width - radius,
+        y
+      );
+
+      ctx.quadraticCurveTo(
+        x + width,
+        y,
+        x + width,
+        y + radius
+      );
+
+      ctx.lineTo(
+        x + width,
+        y + height - radius
+      );
+
+      ctx.quadraticCurveTo(
+        x + width,
+        y + height,
+        x + width - radius,
+        y + height
+      );
+
+      ctx.lineTo(
+        x + radius,
+        y + height
+      );
+
+      ctx.quadraticCurveTo(
+        x,
+        y + height,
+        x,
+        y + height - radius
+      );
+
+      ctx.lineTo(
+        x,
+        y + radius
+      );
+
+      ctx.quadraticCurveTo(
+        x,
+        y,
+        x + radius,
+        y
+      );
+
+      ctx.closePath();
+    }
+
+    function fillRounded(
+      x,
+      y,
+      width,
+      height,
+      radius,
+      color
+    ) {
+      ctx.fillStyle = color;
+
+      roundedRect(
+        x,
+        y,
+        width,
+        height,
+        radius
+      );
+
+      ctx.fill();
+    }
+
+    function drawLine(
+      x1,
+      y1,
+      x2,
+      y2,
+      color,
+      width
+    ) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = "round";
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function showToast(text) {
+      toastElement.textContent = text;
+
+      toastElement.classList.add(
+        "show"
+      );
+
+      clearTimeout(toastTimer);
+
+      toastTimer = setTimeout(() => {
+        toastElement.classList.remove(
+          "show"
+        );
+      }, 1300);
+    }
+
+    function flash() {
+      flashElement.classList.add(
+        "active"
+      );
+
+      setTimeout(() => {
+        flashElement.classList.remove(
+          "active"
+        );
+      }, 90);
+    }
+
+    // ------------------------------------------------------------
+    // صدای ساخته‌شده با خود مرورگر
+    // ------------------------------------------------------------
+
+    function initAudio() {
+      if (!soundEnabled) {
+        return;
+      }
+
+      try {
+        const AudioContextClass =
+          window.AudioContext ||
+          window.webkitAudioContext;
+
+        if (!AudioContextClass) {
+          return;
+        }
+
+        if (!audioContext) {
+          audioContext =
+            new AudioContextClass();
+        }
+
+        if (
+          audioContext.state ===
+          "suspended"
+        ) {
+          audioContext.resume();
+        }
+      } catch {
+        // صدا اختیاری است.
+      }
+    }
+
+    function beep(
+      frequency,
+      duration,
+      type = "sine",
+      volume = 0.045
+    ) {
+      if (
+        !soundEnabled ||
+        !audioContext
+      ) {
+        return;
+      }
+
+      try {
+        const oscillator =
+          audioContext.createOscillator();
+
+        const gain =
+          audioContext.createGain();
+
+        const now =
+          audioContext.currentTime;
+
+        oscillator.type = type;
+
+        oscillator.frequency.setValueAtTime(
+   
